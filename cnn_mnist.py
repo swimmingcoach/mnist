@@ -48,7 +48,7 @@ def print_matrix(board):
 
         for row in tmp:
           print (row)
-          print "\n"
+          print ("\n")
 
 # Create the model
 # placeholder
