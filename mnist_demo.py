@@ -1,4 +1,4 @@
-import image
+from PIL import Image
 from numpy import *
 
 
@@ -17,7 +17,7 @@ def GetImage(filelist):
 
     for filename in filelist:
         # print(filename)
-        img = array(image.open(filename).convert("L"))
+        img = array(Image.open(filename).convert("L"))
         # print (shape(img))
         width, height = shape(img);
         index = 0
@@ -47,6 +47,6 @@ def GetImage(filelist):
         # print(shape(value))
     return array(value), array(label)
 
-# img=array(image.open("test_num/8_3.png"))
+# img=array(Image.open("test_num/8_3.png"))
 # print((img))
 # Getimg(["test_num/1_2.png"])
