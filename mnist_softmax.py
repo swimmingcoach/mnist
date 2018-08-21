@@ -31,7 +31,7 @@ import tensorflow as tf
 
 import os
 
-from mnist_demo import * 
+from mnist_image import *
 
 flags = tf.app.flags
 FLAGS = flags.FLAGS

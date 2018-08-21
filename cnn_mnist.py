@@ -2,7 +2,7 @@
 # coding=utf-8
 import os
 import input_data
-from mnist_demo import *
+from mnist_image import *
 
 mnist = input_data.read_data_sets("data/", one_hot=True)
 

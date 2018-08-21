@@ -1,8 +1,9 @@
 import os
-import tensorflow.examples.tutorials.mnist.input_data as input_data
+import numpy as np
+# import tensorflow.examples.tutorials.mnist.input_data as input_data
 import input_data as in_data
 import tensorflow as tf
-from mnist_demo import *
+from mnist_image import *
 
 # 60000行的训练数据集（mnist.train）和10000行的测试数据集（mnist.test）
 # 每一个MNIST数据单元有两部分组成：一张包含手写数字的图片和一个对应的标签。我们把这些图片设为“xs”，把这些标签设为“ys”。
@@ -17,7 +18,7 @@ from mnist_demo import *
 # 比如，标签0将表示成([1,0,0,0,0,0,0,0,0,0,0])。
 # 因此， mnist.train.labels 是一个 [60000, 10] 的数字矩阵。
 # mnist = input_data.read_data_sets("MNIST_data/", one_hot=True)
-mnist = in_data.read_data_sets("data/", one_hot=True)
+mnist = in_data.read_data_sets("Mnist_data/", one_hot=True)
 
 # x不是一个特定的值，而是一个占位符placeholder，我们在TensorFlow运行计算时输入这个值。
 # 我们希望能够输入任意数量的MNIST图像，每一张图展平成784维的向量。
@@ -60,7 +61,8 @@ init = tf.global_variables_initializer()
 sess = tf.InteractiveSession()
 sess.run(init)
 
-for i in range(1000):
+# 训练10000次，每次随机选取100条记录进行梯度训练
+for i in range(10000):
     batch_xs, batch_ys = mnist.train.next_batch(100)
     sess.run(train_step, feed_dict={x: batch_xs, y_: batch_ys})
 
@@ -79,6 +81,8 @@ for i in range(cnt):
     res = y.eval(feed_dict={x: mnist.test.images, y_: mnist.test.labels, keep_prob: 1.0})
     # res=h_pool2.eval()
     # res=accuracy.eval({x: mnist.test.images, y_: mnist.test.labels})
-    # print("output:",int(res[0]))
-    # print_matrix(res)
-    print("output:", res)
+    raw, column = res.shape
+    _positon = np.argmax(res)
+    m, n = divmod(_positon, column)
+    print("我猜这个数字是: ", n)
+    # print("output:", res)
