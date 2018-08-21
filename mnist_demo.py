@@ -37,7 +37,7 @@ def GetImage(filelist):
 
         tmp_label = zeros([1, 10])
         index = int(filename.strip().split('/')[1][0])
-        print("input:", index)
+        print("GetImage:", index)
         tmp_label[0, index] = 1
         if label[0, 0] == -1:
             label = tmp_label
