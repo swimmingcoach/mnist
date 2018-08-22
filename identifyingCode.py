@@ -1,9 +1,9 @@
 import tensorflow as tf
-import numpy as np
 from PIL import Image
 import os
 import random
 import time
+import numpy as np
 import logger
 
 # 验证码图片的存放路径
@@ -21,6 +21,8 @@ TRAIN_IMAGE_PERCENT = 0.6
 # 训练集，用于训练的验证码图片的文件名
 TRAINING_IMAGE_NAME = []
 # 验证集，用于模型验证的验证码图片的文件名
+
+
 VALIDATION_IMAGE_NAME = []
 # 存放训练好的模型的路径
 MODEL_SAVE_PATH = 'E:/Tensorflow/captcha/models/'
@@ -30,6 +32,7 @@ def get_image_file_name(imgPath=CAPTCHA_IMAGE_PATH):
     fileName = []
     total = 0
     for filePath in os.listdir(imgPath):
+        # logger.error(filePath)
         captcha_name = filePath.split('/')[-1]
         fileName.append(captcha_name)
         total += 1
@@ -48,18 +51,6 @@ def name2label(name):
         idx = i * CHAR_SET_LEN + ord(c) - ord('0')
         label[idx] = 1
     return label
-
-
-# 取得验证码图片的数据以及它的标签
-def get_data_and_label(fileName, filePath=CAPTCHA_IMAGE_PATH):
-    pathName = os.path.join(filePath, fileName)
-    img = Image.open(pathName)
-    # 转为灰度图
-    img = img.convert("L")
-    image_array = np.array(img)
-    image_data = image_array.flatten() / 255
-    image_label = name2label(fileName[0:CAPTCHA_LEN])
-    return image_data, image_label
 
 
 # 生成一个训练batch
@@ -82,6 +73,18 @@ def get_next_batch(batchSize=32, trainOrTest='train', step=0):
     return batch_data, batch_label
 
 
+# 取得验证码图片的数据以及它的标签
+def get_data_and_label(fileName, filePath=CAPTCHA_IMAGE_PATH):
+    pathName = os.path.join(filePath, fileName)
+    img = Image.open(pathName)
+    # 转为灰度图
+    img = img.convert("L")
+    image_array = np.array(img)
+    image_data = image_array.flatten() / 255
+    image_label = name2label(fileName[0:CAPTCHA_LEN])
+    return image_data, image_label
+
+
 # 构建卷积神经网络并训练
 def train_data_with_CNN():
     # 初始化权值
@@ -89,18 +92,18 @@ def train_data_with_CNN():
         init = tf.truncated_normal(shape, stddev=0.1)
         var = tf.Variable(initial_value=init, name=name)
         return var
+        # 初始化偏置
 
-    # 初始化偏置
     def bias_variable(shape, name='bias'):
         init = tf.constant(0.1, shape=shape)
         var = tf.Variable(init, name=name)
         return var
+        # 卷积
 
-    # 卷积
     def conv2d(x, W, name='conv2d'):
         return tf.nn.conv2d(x, W, strides=[1, 1, 1, 1], padding='SAME', name=name)
+        # 池化
 
-    # 池化
     def max_pool_2X2(x, name='maxpool'):
         return tf.nn.max_pool(x, ksize=[1, 2, 2, 1], strides=[1, 2, 2, 1], padding='SAME', name=name)
 
@@ -135,7 +138,8 @@ def train_data_with_CNN():
     # 每次池化后，图片的宽度和高度均缩小为原来的一半，进过上面的三次池化，宽度和高度均缩小8倍
     W_fc1 = weight_variable([20 * 8 * 64, 1024], 'W_fc1')
     B_fc1 = bias_variable([1024], 'B_fc1')
-    fc1 = tf.reshape(conv3, [-1, 20 * 8 * 64])
+    # fc1 = tf.reshape(conv3, [-1, 20 * 8 * 64])
+    fc1 = tf.reshape(conv3, [-1, W_fc1.get_shape().as_list()[0]])
     fc1 = tf.nn.relu(tf.add(tf.matmul(fc1, W_fc1), B_fc1))
     fc1 = tf.nn.dropout(fc1, keep_prob)
     # 输出层
@@ -161,11 +165,12 @@ def train_data_with_CNN():
         steps = 0
         for epoch in range(6000):
             train_data, train_label = get_next_batch(64, 'train', steps)
-            sess.run(optimizer, feed_dict={X: train_data, Y: train_label, keep_prob: 0.75})
+            op, pre = sess.run([optimizer, labels_max_idx], feed_dict={X: train_data, Y: train_label, keep_prob: 0.75})
+
             if steps % 100 == 0:
                 test_data, test_label = get_next_batch(100, 'validate', steps)
                 acc = sess.run(accuracy, feed_dict={X: test_data, Y: test_label, keep_prob: 1.0})
-                logger.debug("steps=%d, accuracy=%f" % (steps, acc))
+                logger.error("steps=%4d, accuracy=%f" % (steps, acc))
                 if acc > 0.99:
                     saver.save(sess, MODEL_SAVE_PATH + "crack_captcha.model", global_step=steps)
                     break
@@ -173,7 +178,8 @@ def train_data_with_CNN():
 
 
 if __name__ == '__main__':
-    logger.debug('Training start')
+    # get_image_file_name()
+    logger.error('Training start')
     image_filename_list, total = get_image_file_name(CAPTCHA_IMAGE_PATH)
     random.seed(time.time())
     # 打乱顺序
@@ -183,5 +189,5 @@ if __name__ == '__main__':
     TRAINING_IMAGE_NAME = image_filename_list[: trainImageNumber]
     # 和验证集
     VALIDATION_IMAGE_NAME = image_filename_list[trainImageNumber:]
-    # train_data_with_CNN()
-    logger.debug('Training finished')
+    train_data_with_CNN()
+    logger.error('Training finished')

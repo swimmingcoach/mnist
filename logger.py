@@ -1,7 +1,7 @@
 # coding=utf-8
 import logging
 
-level = logging.DEBUG
+level = logging.ERROR
 
 # 第一步，创建一个logger
 logger = logging.getLogger()
