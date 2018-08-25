@@ -53,6 +53,23 @@ def name2label(name):
     return label
 
 
+# 将验证码转换为训练时用的标签向量，维数是 40
+# 例如，如果标签是
+# [1 0 0 0 0 0 0 0 0 0
+#  0 0 1 0 0 0 0 0 0 0
+#  0 0 0 0 0 0 0 0 0 1
+#  0 0 0 0 0 0 1 0 0 0]
+# 则对应的验证码是 ‘0296’
+def label2name(label):
+    name = 0
+    for i, c in enumerate(label):
+        if c == 1:
+            idx = i // CHAR_SET_LEN
+            val = i % CHAR_SET_LEN
+            name += val*(10**(3-idx))
+    return name
+
+
 # 生成一个训练batch
 def get_next_batch(batchSize=32, trainOrTest='train', step=0):
     batch_data = np.zeros([batchSize, CAPTCHA_IMAGE_WIDHT * CAPTCHA_IMAGE_HEIGHT])
@@ -83,6 +100,40 @@ def get_data_and_label(fileName, filePath=CAPTCHA_IMAGE_PATH):
     image_data = image_array.flatten() / 255
     image_label = name2label(fileName[0:CAPTCHA_LEN])
     return image_data, image_label
+
+
+def train_data_with():
+    # x = tf.placeholder(tf.float32, [None, 784])
+    x = tf.placeholder(tf.float32, [None, CAPTCHA_IMAGE_WIDHT * CAPTCHA_IMAGE_HEIGHT], name='data-input')
+    W = tf.Variable(tf.zeros([CAPTCHA_IMAGE_WIDHT * CAPTCHA_IMAGE_HEIGHT, 40]))
+    b = tf.Variable(tf.zeros([40]))
+
+    y = tf.nn.softmax(tf.matmul(x, W) + b)
+
+    y_ = tf.placeholder("float", [None, 40])
+
+    # 计算交叉熵
+    cross_entropy = -tf.reduce_sum(y_ * tf.log(y))
+    train_step = tf.train.GradientDescentOptimizer(0.01).minimize(cross_entropy)
+    init = tf.global_variables_initializer()
+
+    sess = tf.InteractiveSession()
+    sess.run(init)
+
+    # 训练10000次，每次随机选取100条记录进行梯度训练
+    steps = 0
+    for j in range(10000):
+        batch_xs, batch_ys = get_next_batch(100, 'train', steps)
+        sess.run(train_step, feed_dict={x: batch_xs, y_: batch_ys})
+        steps += 1
+        if steps % 100 == 0:
+            logger.error("steps=%4d" % steps)
+
+    logger.error('Training finished')
+    prob = tf.placeholder("float")
+    test_images1, test_labels1 = get_next_batch(1, 'validate', steps)
+    res = y.eval(feed_dict={x: test_images1, y_: test_labels1, prob: 1.0})
+    logger.error("Test finished, input: %4d, output: %s" % (label2name(test_labels1[0]), res))
 
 
 # 构建卷积神经网络并训练
@@ -147,7 +198,7 @@ def train_data_with_CNN():
     B_fc2 = bias_variable([CAPTCHA_LEN * CHAR_SET_LEN], 'B_fc2')
     output = tf.add(tf.matmul(fc1, W_fc2), B_fc2, 'output')
 
-    loss = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(labels=Y, logits=output))
+    loss = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(labels=output, logits=Y))
     optimizer = tf.train.AdamOptimizer(0.001).minimize(loss)
 
     predict = tf.reshape(output, [-1, CAPTCHA_LEN, CHAR_SET_LEN], name='predict')
@@ -168,7 +219,7 @@ def train_data_with_CNN():
             op, pre = sess.run([optimizer, labels_max_idx], feed_dict={X: train_data, Y: train_label, keep_prob: 0.75})
 
             if steps % 100 == 0:
-                test_data, test_label = get_next_batch(100, 'validate', steps)
+                test_data, test_label = get_next_batch(50, 'validate', steps)
                 acc = sess.run(accuracy, feed_dict={X: test_data, Y: test_label, keep_prob: 1.0})
                 logger.error("steps=%4d, accuracy=%f" % (steps, acc))
                 if acc > 0.99:
@@ -189,5 +240,6 @@ if __name__ == '__main__':
     TRAINING_IMAGE_NAME = image_filename_list[: trainImageNumber]
     # 和验证集
     VALIDATION_IMAGE_NAME = image_filename_list[trainImageNumber:]
+    # train_data_with_CNN()
     train_data_with_CNN()
     logger.error('Training finished')
