@@ -1,0 +1,2 @@
+2018-08-24 13:43:15,897 - logger.py[line:43] - ERROR: Training start
+2018-08-24 13:45:49,657 - logger.py[line:43] - ERROR: step 0, training accuracy 0.109375 
