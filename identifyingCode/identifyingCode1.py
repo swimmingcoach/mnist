@@ -120,7 +120,7 @@ def train_data_with_cnn():
         if i % 100 == 0:
             train_accuracy = accuracy.eval(feed_dict={x: batch_x, y_: batch_y})
             logger.error("step %d, training accuracy %g " % (i, train_accuracy))
-            if train_accuracy > 0.99:
+            if train_accuracy > 0.9999:
                 saver.save(sess, MODEL_SAVE_PATH, global_step=i)
                 break
         train_step.run(feed_dict={x: batch_x, y_: batch_y})

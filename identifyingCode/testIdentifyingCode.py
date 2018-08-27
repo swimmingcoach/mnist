@@ -2,7 +2,6 @@ import tensorflow as tf
 import numpy as np
 from PIL import Image
 import os
-import matplotlib.pyplot as plt
 import logger
 
 CAPTCHA_LEN = 4
@@ -55,7 +54,7 @@ def model_test():
                 count += 1
             else:
                 result = '错误'
-            logger.error('实际值：{}， 预测值：{}，测试结果：{}'.format(rightValue, predictValue, result))
+            logger.error('实际值：{}， 预测值：{}，测试结果：{}\n'.format(rightValue, predictValue, result))
 
         logger.error('正确率：%.2f%%(%d/%d)' % (count * 100 / totalNumber, count, totalNumber))
 
