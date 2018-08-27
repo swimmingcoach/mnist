@@ -35,24 +35,19 @@ def model_test():
         nameList.append(pathName.split('/')[-1])
     totalNumber = len(nameList)
     # 加载graph
-    saver = tf.train.import_meta_graph(MODEL_SAVE_PATH + "crack_captcha.model-3700.meta")
+    saver = tf.train.import_meta_graph(MODEL_SAVE_PATH + "-34100.meta")
     graph = tf.get_default_graph()
     # 从graph取得 tensor，他们的name是在构建graph时定义的(查看上面第2步里的代码)
-    input_holder = graph.get_tensor_by_name("data-input:0")
-    keep_prob_holder = graph.get_tensor_by_name("keep-prob:0")
+    input_holder = graph.get_tensor_by_name("input:0")
     predict_max_idx = graph.get_tensor_by_name("predict_max_idx:0")
     with tf.Session() as sess:
         saver.restore(sess, tf.train.latest_checkpoint(MODEL_SAVE_PATH))
         count = 0
         for fileName in nameList:
             img_data, img_name = get_image_data_and_name(fileName, TEST_IMAGE_PATH)
-            predict = sess.run(predict_max_idx, feed_dict={input_holder: [img_data], keep_prob_holder: 1.0})
+            predict = sess.run(predict_max_idx, feed_dict={input_holder: [img_data]})
             filePathName = TEST_IMAGE_PATH + fileName
             logger.error(filePathName)
-            img = Image.open(filePathName)
-            plt.imshow(img)
-            plt.axis('off')
-            plt.show()
             predictValue = np.squeeze(predict)
             rightValue = digitalStr2Array(img_name)
             if np.array_equal(predictValue, rightValue):
@@ -61,7 +56,6 @@ def model_test():
             else:
                 result = '错误'
             logger.error('实际值：{}， 预测值：{}，测试结果：{}'.format(rightValue, predictValue, result))
-            logger.error('\n')
 
         logger.error('正确率：%.2f%%(%d/%d)' % (count * 100 / totalNumber, count, totalNumber))
 
